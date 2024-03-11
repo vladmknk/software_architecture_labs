@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width" />
+	<title>Список проектів</title>
+	<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" />
+	<style>
+		form {
+			max-width: 30%;
+		}
+
+		body {
+			margin: 10px;
+		}
+	</style>
+</head>
+
+<body>
+	<h2>Список проектів</h2>
+	<form name="projectForm">
+		<input type="hidden" name="id" value="0" />
+		<div class="form-group">
+			<label for="name">Назва проекту:</label>
+			<input class="form-control" name="name" />
+		</div>
+		<div class="form-group">
+			<label for="p_start">Дата початку:</label>
+			<input type="date" class="form-control" name="p_start" />
+		</div>
+		<div class="form-group">
+			<label for="p_end">Дата закінчення:</label>
+			<input type="date" class="form-control" name="p_end" />
+		</div>
+		<div class="form-group">
+			<label for="profit">Прибуток:</label>
+			<input type="number" class="form-control" name="profit" />
+		</div>
+		<div class="panel-body">
+			<button type="submit" class="btn btn-sm btn-primary">Зберегти</button>
+			<a id="reset" class="btn btn-sm btn-primary">Скинути</a>
+		</div>
+	</form>
+	<table class="table table-condensed table-striped table-bordered">
+		<thead>
+			<tr>
+				<th>Id</th>
+				<th>Назва</th>
+				<th>Дата початку</th>
+				<th>Дата закінчення</th>
+				<th>Прибуток</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+		</tbody>
+	</table>
+
+	<script>
+		async function GetProjects() {
+			const response = await fetch("/api/projects", {
+				method: "GET",
+				headers: { "Accept": "application/json" }
+			});
+			if (response.ok === true) {
+				const projects = await response.json();
+				let table = document.querySelectorAll("table tbody tr");
+				console.log(table);
+				if (table != null) {
+					table.forEach(table => table.remove());
+				}
+				let rows = document.querySelector("tbody");
+				projects.forEach(project => {
+					console.log(project);
+					rows.append(row(project));
+				});
+			}
+		}
+
+		async function GetProject(id) {
+			const response = await fetch("/api/projects/" + id, {
+				method: "GET",
+				headers: { "Accept": "application/json" }
+			});
+			if (response.ok === true) {
+				const project = await response.json();
+				const form = document.forms["projectForm"];
+				form.elements["id"].value = project._id;
+				form.elements["name"].value = project.name;
+				form.elements["p_start"].value = project.p_start.split('T')[0]; // Преобразование дати до формату yyyy-mm-dd
+				form.elements["p_end"].value = project.p_end.split('T')[0];
+				form.elements["profit"].value = project.profit;
+			}
+		}
+
+		async function CreateProject(projectName, projectStart, projectEnd, projectProfit) {
+			const response = await fetch("/api/projects", {
+				method: "POST",
+				headers: { "Accept": "application/json", "Content-Type": "application/json" },
+				body: JSON.stringify({
+					name: projectName,
+					p_start: projectStart,
+					p_end: projectEnd,
+					profit: projectProfit
+				})
+			});
+			if (response.ok === true) {
+				await GetProjects();
+				reset();
+			}
+		}
+
+		async function EditProject(projectId, projectName, projectStart, projectEnd, projectProfit) {
+			const response = await fetch("/api/projects", {
+				method: "PUT",
+				headers: { "Accept": "application/json", "Content-Type": "application/json" },
+				body: JSON.stringify({
+					id: projectId,
+					name: projectName,
+					p_start: projectStart,
+					p_end: projectEnd,
+					profit: projectProfit
+				})
+			});
+			if (response.ok === true) {
+				await GetProjects();
+				reset();
+			}
+		}
+
+		async function DeleteProject(id) {
+			const response = await fetch("/api/projects/" + id, {
+				method: "DELETE",
+				headers: { "Accept": "application/json" }
+			});
+			if (response.ok === true) {
+				await GetProjects();
+			}
+		}
+
+		function reset() {
+			const form = document.forms["projectForm"];
+			form.reset();
+			form.elements["id"].value = 0;
+		}
+
+		function row(project) {
+			const tr = document.createElement("tr");
+			tr.setAttribute("data-rowid", project._id);
+
+			const idTd = document.createElement("td");
+			idTd.append(project._id);
+			tr.append(idTd);
+
+			const nameTd = document.createElement("td");
+			nameTd.append(project.name);
+			tr.append(nameTd);
+
+			const startTd = document.createElement("td");
+			startTd.append(project.p_start.split('T')[0]);
+			tr.append(startTd);
+
+			const endTd = document.createElement("td");
+			endTd.append(project.p_end.split('T')[0]);
+			tr.append(endTd);
+
+			const profitTd = document.createElement("td");
+			profitTd.append(project.profit);
+			tr.append(profitTd);
+
+			const linksTd = document.createElement("td");
+			const editLink = document.createElement("a");
+			editLink.setAttribute("data-id", project._id);
+			editLink.setAttribute("style", "cursor:pointer;padding:15px;");
+			editLink.append("Редагувати");
+			editLink.addEventListener("click", e => {
+				e.preventDefault();
+				GetProject(project._id);
+			});
+			linksTd.append(editLink);
+
+			const removeLink = document.createElement("a");
+			removeLink.setAttribute("data-id", project._id);
+			removeLink.setAttribute("style", "cursor:pointer;padding:15px;");
+			removeLink.append("Видалити");
+			removeLink.addEventListener("click", e => {
+				e.preventDefault();
+				DeleteProject(project._id);
+			});
+
+			linksTd.append(removeLink);
+			tr.appendChild(linksTd);
+
+			return tr;
+		}
+
+		document.getElementById("reset").addEventListener("click", function (e) {
+			e.preventDefault();
+			reset();
+		});
+
+		document.forms["projectForm"].addEventListener("submit", e => {
+			e.preventDefault();
+			const form = document.forms["projectForm"];
+			const id = form.elements["id"].value;
+			const name = form.elements["name"].value;
+			const p_start = form.elements["p_start"].value;
+			const p_end = form.elements["p_end"].value;
+			const profit = parseInt(form.elements["profit"].value, 10);
+			if (id === "0")
+				CreateProject(name, p_start, p_end, profit);
+			else
+				EditProject(id, name, p_start, p_end, profit);
+		});
+
+		GetProjects();
+	</script>
+</body>
+
+</html>
