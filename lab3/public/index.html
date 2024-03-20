@@ -88,7 +88,7 @@
 				const form = document.forms["projectForm"];
 				form.elements["id"].value = project._id;
 				form.elements["name"].value = project.name;
-				form.elements["p_start"].value = project.p_start.split('T')[0]; // Преобразование дати до формату yyyy-mm-dd
+				form.elements["p_start"].value = project.p_start.split('T')[0];
 				form.elements["p_end"].value = project.p_end.split('T')[0];
 				form.elements["profit"].value = project.profit;
 			}
