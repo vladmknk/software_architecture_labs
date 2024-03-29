@@ -1,0 +1,21 @@
+{
+    "name": "lab3",
+    "version": "1.0.0",
+    "description": "lab3",
+    "main": "app.js",
+    "scripts": {
+        "start": "node app.js",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "software_architecture_labs"
+    },
+    "author": "vladmknk",
+    "license": "ISC",
+    "dependencies": {
+        "express": "^4.18.3",
+        "mongodb": "^4.13.0",
+        "mongoose": "^8.2.4"
+    }
+}
